@@ -1,6 +1,13 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
-Console.WriteLine("Test1");
-Console.WriteLine("Test2");
-Console.WriteLine("Test4");
+﻿using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
+class App
+{
+    public static void Main(string[] args)
+    {
+        Server.GetInstance().InitializeServer();
+    }
+}
