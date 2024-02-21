@@ -6,7 +6,7 @@ using System.Threading;
 
 class App
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
         Server.GetInstance().InitializeServer();
     }
