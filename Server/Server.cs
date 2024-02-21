@@ -78,12 +78,12 @@ class Server
                 switch (data.Type)
                 {
                     case "login":
-                        SendMessage(new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
+                        SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
                         break;
                     case "register":
                         break;
                     case "message":
-                        SendMessage(new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
+                        SendMessage(new Message() { MessageContents = data.MessageContents, Sender = data.Sender, Type = data.Type});
                         break;
                     default:
                         break;
