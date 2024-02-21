@@ -7,6 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-
+        <TextBox Margin="183,319,291,75" x:Name="usr" ></TextBox>
+        <TextBox Margin="183,359,291,42" x:Name="psw" ></TextBox>
+        <Button Margin="509,319,216,66" Content="Send" Click="Button_Click"></Button>
+        <TextBlock x:Name="msgbox" Margin="183,10,216,115"></TextBlock>
     </Grid>
 </Window>

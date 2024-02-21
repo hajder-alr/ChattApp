@@ -3,9 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chatt", "Chatt\Chatt.csproj", "{D3571BC9-D381-43E6-8845-77126FB1B514}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chatt", "Chatt\Chatt.csproj", "{D3571BC9-D381-43E6-8845-77126FB1B514}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990} = {4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Server\Server.csproj", "{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
