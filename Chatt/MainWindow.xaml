@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Chatt"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" Background="DarkGray">
     <Grid>
-        <TextBox Margin="10,10,661,337" x:Name="sender"></TextBox>
-        <Button Margin="26,97,700,240" x:Name="btnSender1" Click="btnSender1_Click"></Button>
-        <TextBox Margin="183,319,291,75" x:Name="msg" ></TextBox>
-        <Button Margin="509,319,216,66" Content="Send" Click="Button_Click"></Button>
-        <TextBlock x:Name="msgbox" Margin="183,10,216,115"></TextBlock>
+        <TextBox Margin="10,234,661,180" x:Name="sender"></TextBox>
+        <Button Margin="10,313,661,100" x:Name="btnSender1" Click="btnSender1_Click" Content="Logga In"></Button>
+        <TextBox Margin="200,351,272,34" x:Name="msg" ></TextBox>
+        <Button Margin="533,351,192,34" Content="Send" Click="Button_Click"></Button>
+        <TextBlock x:Name="msgbox" Margin="200,24,192,100" Background="White"></TextBlock>
+        <TextBox Margin="10,272,661,141" x:Name="password"/>
     </Grid>
 </Window>

@@ -26,9 +26,7 @@ namespace Chatt
     {
         TcpClient client;
         NetworkStream stream;
-        StreamReader sr;
         Message message;
-        BackgroundWorker backgroundWorker1;
         public MainWindow()
         {
             InitializeComponent();
@@ -40,11 +38,9 @@ namespace Chatt
         private void Button_Click(object sender, RoutedEventArgs e)
         {
            
-                message.MessageContents = msg.Text;
-                string jsonString = JsonSerializer.Serialize(message);
-                int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
-                byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
-                stream.Write(sendData, 0, sendData.Length);
+            message.MessageContents = msg.Text;
+            message.Type = "message";
+            sendDataPacket(message);
 
         }
         private  void UpdateTextBox(string text)
@@ -97,14 +93,12 @@ namespace Chatt
                      try
                      {
                          client = new TcpClient("127.0.0.1", 1302);
-
                          stream = client.GetStream();
                          message.Sender = sender.Text;
                          message.Username = message.Sender;
-                         message.Type = "message";
-
-                         Console.WriteLine("Enter recipient name: ");
-                         message.Recipient = "1";
+                         message.Type = "login";
+                         message.MessageContents = "has connected";
+                         sendDataPacket(message);
                          Thread receivingThread = new Thread(() => ReceivingTask(stream,client));
                          receivingThread.Start();
                      }
@@ -119,6 +113,14 @@ namespace Chatt
         private void btnSender1_Click(object sender, RoutedEventArgs e)
         {
             Startup();
+        }
+
+        private void sendDataPacket(Message message) 
+        {
+            string jsonString = JsonSerializer.Serialize(message);
+            int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
+            byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
+            stream.Write(sendData, 0, sendData.Length);
         }
     }
 
