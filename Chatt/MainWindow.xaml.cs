@@ -16,7 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using System.Threading;
 namespace Chatt
 {
     /// <summary>
@@ -32,6 +32,7 @@ namespace Chatt
         public MainWindow()
         {
             InitializeComponent();
+            
            
         }
 
@@ -45,40 +46,44 @@ namespace Chatt
                 int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
                 byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
                 stream.Write(sendData, 0, sendData.Length);
-                byte[] buffer = new byte[1024]; //1 KB
-                int recv = stream.Read(buffer, 0, buffer.Length);
-                string request = Encoding.UTF8.GetString(buffer, 0, recv);
+                checkformessages();
 
-                // Change string type from string to json
-                Message data = JsonSerializer.Deserialize<Message>(request);
-
-                if (data != null) // User gets added when sending first request
-                {
-                    msgbox.Text += ($"[{data.Sender}]: {data.MessageContents} \n");
-                }
         }
+        private void checkformessages() 
+        {
+            byte[] buffer = new byte[1024];
+            int recv = stream.Read(buffer, 0, buffer.Length);
+            string request = Encoding.UTF8.GetString(buffer, 0, recv);
+      
+            Message data = JsonSerializer.Deserialize<Message>(request);
 
+            if (data != null) 
+            {                
+                 msgbox.Text += ($"[{data.Sender}]: {data.MessageContents} \n");
+            }
+                
+        }
         private void Startup() 
         {
             message = new Message();
-        connection:
-            try
-            {
-                client = new TcpClient("127.0.0.1", 1302);
+            connection:
+                     try
+                     {
+                         client = new TcpClient("127.0.0.1", 1302);
 
-                stream = client.GetStream();
-                message.Sender = sender.Text;
-                message.Username = message.Sender;
-                message.Type = "message";
+                         stream = client.GetStream();
+                         message.Sender = sender.Text;
+                         message.Username = message.Sender;
+                         message.Type = "message";
 
-                Console.WriteLine("Enter recipient name: ");
-                message.Recipient = "1";
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("failed to connect...");
-                goto connection;
-            }
+                         Console.WriteLine("Enter recipient name: ");
+                         message.Recipient = "1";
+                     }
+                     catch (Exception)
+                     {
+                         Console.WriteLine("failed to connect...");
+                         goto connection;
+                     }
 
         }
 
