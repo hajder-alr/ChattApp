@@ -23,7 +23,7 @@ class Server
         Port = _port;
     }
 
-    public static Server GetInstance(string ip = "192.168.0.112", int port = 1302)
+    public static Server GetInstance(string ip = "127.0.0.1", int port = 1302)
     {
         if (instance == null)
         {
@@ -83,7 +83,7 @@ class Server
                     case "register":
                         break;
                     case "message":
-                        SendMessage(data.Recipient!, new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
+                        SendMessage(new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
                         break;
                     default:
                         break;
@@ -98,7 +98,7 @@ class Server
         }
     }
 
-    private void SendMessage(string username, Message message)
+    private void SendMessage(Message message)
     {
         foreach (var tcp in connectedClients)
         {
