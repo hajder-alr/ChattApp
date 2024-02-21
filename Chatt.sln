@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chatt", "Chatt\Chatt.csproj", "{D3571BC9-D381-43E6-8845-77126FB1B514}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chatt", "Chatt\Chatt.csproj", "{D3571BC9-D381-43E6-8845-77126FB1B514}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPServer", "TCPServer\TCPServer.csproj", "{1E772C8A-E4DE-4C25-8E99-381C73D0A78D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{D3571BC9-D381-43E6-8845-77126FB1B514}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3571BC9-D381-43E6-8845-77126FB1B514}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3571BC9-D381-43E6-8845-77126FB1B514}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4A74A68E-38F9-4BD8-B7E4-3FC148FD6990}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E772C8A-E4DE-4C25-8E99-381C73D0A78D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E772C8A-E4DE-4C25-8E99-381C73D0A78D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E772C8A-E4DE-4C25-8E99-381C73D0A78D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E772C8A-E4DE-4C25-8E99-381C73D0A78D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
