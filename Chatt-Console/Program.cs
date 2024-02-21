@@ -13,7 +13,8 @@ namespace Server
         connection:
             try
             {
-                TcpClient client = new TcpClient("127.0.0.1", 1302);
+                TcpClient client = new TcpClient("2.tcp.eu.ngrok.io", 15615);
+
                 NetworkStream stream = client.GetStream();
 
                 Console.WriteLine("Enter your name: ");

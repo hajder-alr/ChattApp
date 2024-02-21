@@ -23,11 +23,13 @@ class Server
         Port = _port;
     }
 
-    public static Server GetInstance(string ip = "127.0.0.1", int port = 1302)
+    public static Server GetInstance(string ip = "192.168.0.112", int port = 1302)
     {
         if (instance == null)
         {
-            instance = new Server(ip, port);
+            string pi = IPAddress.Any.ToString();
+            instance = new Server(pi, port);
+            Console.Write(pi);
         }
         return instance;
     }
@@ -86,7 +88,6 @@ class Server
                     default:
                         break;
                 }
-
                 Console.WriteLine("request received: " + request);
             }
         }
@@ -99,9 +100,9 @@ class Server
 
     private void SendMessage(string username, Message message)
     {
-        if (connectedClients.ContainsKey(username))
+        foreach (var tcp in connectedClients)
         {
-            TcpClient client = connectedClients[username];
+            TcpClient client = tcp.Value;
             NetworkStream stream = client.GetStream();
 
             string jsonString = JsonSerializer.Serialize(message);
@@ -111,10 +112,5 @@ class Server
             stream.Write(buffer, 0, buffer.Length);
             stream.Flush();
         }
-        else
-        {
-            Console.WriteLine($"User '{username}' not found.");
-        }
     }
-
 }
