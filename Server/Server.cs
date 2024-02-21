@@ -61,16 +61,15 @@ class Server
         {
             while (true)
             {
-                byte[] buffer = new byte[1024]; //1 KB
+                byte[] buffer = new byte[1024]; 
                 int recv = stream.Read(buffer, 0, buffer.Length);
-                if (recv == 0) break;
+
+                if (recv == 0) { break; }
 
                 string request = Encoding.UTF8.GetString(buffer, 0, recv);
-
-                // Change string type from string to json
                 Message data = JsonSerializer.Deserialize<Message>(request);
 
-                if (data != null) // User gets added when sending first request
+                if (data != null) 
                 {
                     if (!connectedClients.ContainsKey(data.Sender))
                         connectedClients.Add(data.Sender, client);
