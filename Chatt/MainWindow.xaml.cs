@@ -32,8 +32,7 @@ namespace Chatt
         public MainWindow()
         {
             InitializeComponent();
-            
-           
+
         }
 
         
@@ -46,22 +45,50 @@ namespace Chatt
                 int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
                 byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
                 stream.Write(sendData, 0, sendData.Length);
-                checkformessages();
 
         }
-        private void checkformessages() 
+        private  void UpdateTextBox(string text)
         {
-            byte[] buffer = new byte[1024];
-            int recv = stream.Read(buffer, 0, buffer.Length);
-            string request = Encoding.UTF8.GetString(buffer, 0, recv);
-      
-            Message data = JsonSerializer.Deserialize<Message>(request);
-
-            if (data != null) 
-            {                
-                 msgbox.Text += ($"[{data.Sender}]: {data.MessageContents} \n");
+            // Check if access to the TextBox is required from a different thread
+            if (!msgbox.Dispatcher.CheckAccess())
+            {
+                // If so, marshal the update operation to the UI thread
+                msgbox.Dispatcher.Invoke(() => UpdateTextBox(text));
+                return;
             }
-                
+
+            // Update the TextBox
+            msgbox.Text += text + "\n";
+        }
+
+        private void ReceivingTask(NetworkStream stream,TcpClient client)
+        {
+            try
+            {
+                while (true)
+                {
+                    byte[] receiveData = new byte[1024];
+                    int bytesReceived = stream.Read(receiveData, 0, receiveData.Length);
+
+                    string response = Encoding.UTF8.GetString(receiveData, 0, bytesReceived);
+
+                    Message data = JsonSerializer.Deserialize<Message>(response)!;
+                    UpdateTextBox($"[{data.Sender}]: {data.MessageContents}");
+
+                }
+            }
+            catch (ThreadAbortException)
+            {
+                // This exception will be thrown when the thread is aborted.
+                // You can handle any cleanup or finalization here.
+                Console.WriteLine("Receiving thread aborted.");
+            }
+            finally
+            {
+                // Ensure to close the stream and client when done.
+                stream.Close();
+                client.Close();
+            }
         }
         private void Startup() 
         {
@@ -78,6 +105,8 @@ namespace Chatt
 
                          Console.WriteLine("Enter recipient name: ");
                          message.Recipient = "1";
+                         Thread receivingThread = new Thread(() => ReceivingTask(stream,client));
+                         receivingThread.Start();
                      }
                      catch (Exception)
                      {
