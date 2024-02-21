@@ -5,14 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Chatt"
         mc:Ignorable="d"
-        Title="TCP/IP Client" Height="344" Width="602">
+        Title="TCP/IP Client" Height="344" Width="602" Loaded="MainWindow1_Loaded">
     <Grid>
         <Label Content="Server:" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="txtIP" HorizontalAlignment="Left" Margin="67,15,0,0" TextWrapping="Wrap" Text="127.0.0.1:9000" VerticalAlignment="Top" Width="509"/>
-        <Button x:Name="btnConnect" Content="Connect" HorizontalAlignment="Left" Margin="536,287,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="btnConnect" Content="Connect" HorizontalAlignment="Left" Margin="536,287,0,0" VerticalAlignment="Top" Click="btnConnect_Click"/>
         <TextBox x:Name="txtInfo" HorizontalAlignment="Left" Margin="67,48,0,0" TextWrapping="Wrap" AcceptsReturn="True" VerticalAlignment="Top" Width="509" Height="193" VerticalScrollBarVisibility="Visible"/>
         <TextBox x:Name="txtMessage" HorizontalAlignment="Left" Margin="67,255,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="509"/>
-        <Button x:Name="btnSend" Content="Send" HorizontalAlignment="Left" Margin="480,287,0,0" VerticalAlignment="Top" Width="42"/>
+        <Button x:Name="btnSend" Content="Send" HorizontalAlignment="Left" Margin="480,287,0,0" VerticalAlignment="Top" Width="42" Click="btnSend_Click"/>
         <Label Content="Message:" HorizontalAlignment="Left" Margin="10,251,0,0" VerticalAlignment="Top"/>
 
     </Grid>

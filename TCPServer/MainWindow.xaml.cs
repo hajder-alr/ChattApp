@@ -45,7 +45,7 @@ namespace TCPServer
 		private void MainWindow_Loaded(object sender, EventArgs e)
 		{
 			btnSend.IsEnabled = false;
-			server = new SimpleTcpServer("127.0.0.1:12345");
+			server = new SimpleTcpServer("127.0.0.1:9000");
 			server.Events.ClientConnected +=Events_ClientConnected;
 			server.Events.ClientDisconnected +=Events_ClientDisconnected;
 			server.Events.DataReceived +=Events_DataReceived;
