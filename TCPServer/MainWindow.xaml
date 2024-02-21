@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TCPServer"
         mc:Ignorable="d"
-        Title="TCP/IP Server" Height="395" Width="765">
+        Title="TCP/IP Server" Height="395" Width="765" Loaded="MainWindow_Loaded">
     <Grid>
         <Label Content="Server:" HorizontalAlignment="Left" Margin="10,11,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="txtIP" HorizontalAlignment="Left" Margin="67,15,0,0" TextWrapping="Wrap" Text="127.0.0.1:12345" VerticalAlignment="Top" Width="509"/>
