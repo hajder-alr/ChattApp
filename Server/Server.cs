@@ -7,6 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Text.Json;
+using Server.Database;
+using System.Reflection.Metadata;
+using Server.Database.Models;
 
 namespace Server
 {
@@ -18,6 +21,8 @@ namespace Server
         private int Port { get; set; }
 
         private readonly Dictionary<string, TcpClient> connectedClients = new();
+
+        ApplicationDbContext db = new ApplicationDbContext();
 
         private Server(string _ip, int _port)
         {
@@ -46,6 +51,7 @@ namespace Server
 
             while (true)
             {
+
                 Console.WriteLine("waiting for connection..");
 
                 TcpClient client = TcpListener.AcceptTcpClient();
@@ -80,10 +86,25 @@ namespace Server
 
                     switch (data.Type)
                     {
-                        case "login":
+                        case "getallusers":
+                            List<User> users;
 
+                            users = db.Users.ToList();
+
+                            string temp = "";
+                            foreach (User user in users)
+                            {
+                                temp += user.Username + ";";
+                                temp += user.Password + "/n";
+                            }
+
+                            Message message = new Message { MessageContents = temp };
+                            SendToClient(client, message);
+                            break;
+                        case "login":
                             break;
                         case "register":
+                            RegisterUser(data, client);
                             break;
                         case "message":
                             SendMessage(data.Recipient!, new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
@@ -115,6 +136,37 @@ namespace Server
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Flush();
             }
+        }
+
+        private void RegisterUser(Message data, TcpClient client)
+        {
+            try
+            {
+                // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
+                db.Add(new Database.Models.User { Username = data.Username, Password = data.Password });
+                db.SaveChanges();
+
+                Message message = new Message();
+                message.Type = "register";
+                message.MessageContents = "Success";
+                SendToClient(client, message);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        private void SendToClient(TcpClient tcpClient, Message message)
+        {
+            NetworkStream stream = tcpClient.GetStream();
+
+            string jsonString = JsonSerializer.Serialize(message);
+
+            byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
+
+            stream.Write(buffer, 0, buffer.Length);
+            stream.Flush();
         }
     }
 }
