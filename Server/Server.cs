@@ -24,7 +24,13 @@ namespace Server
 
         ApplicationDbContext db = new ApplicationDbContext();
 
+
         private Server(string _ip, int _port)
+
+    public static Server GetInstance(string ip = "127.0.0.1", int port = 1302)
+    {
+        if (instance == null)
+
         {
             Ip = IPAddress.Parse(_ip);
             Port = _port;
@@ -67,6 +73,7 @@ namespace Server
             NetworkStream stream = client.GetStream();
             try
             {
+
                 while (true)
                 {
                     byte[] buffer = new byte[1024]; //1 KB
@@ -135,6 +142,7 @@ namespace Server
 
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Flush();
+               
             }
         }
 
@@ -156,6 +164,7 @@ namespace Server
                 Console.WriteLine(e.ToString());
             }
         }
+
 
         private void SendToClient(TcpClient tcpClient, Message message)
         {

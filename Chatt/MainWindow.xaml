@@ -5,8 +5,88 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Chatt"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Height="650" 
+        Width="1200" 
+        Background="#36393F" 
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="CanResizeWithGrip">
     <Grid>
 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.ColumnSpan="2" Background="#252525" MouseDown="Border_MouseDown">
+            <Grid HorizontalAlignment="Stretch">
+                <Label Content="ChattApp"
+                       Foreground="Gray" 
+                       FontWeight="SemiBold"/>
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button Uid="1" Width="20" Height="20" Content="_" Background="Transparent" Foreground="Gray" BorderThickness="0" Click="BorderClick" Margin="0,0,0,3"/>
+                    <Button Uid="2" Width="20" Height="20" Content="□" Background="Transparent" Foreground="Gray" BorderThickness="0" Click="BorderClick"/>
+                    <Button Uid="3" Width="20" Height="20" Content="X" Background="Transparent" Foreground="Gray" BorderThickness="0" Click="BorderClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Background="#2F3136" Grid.Row="1" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+            <Label Content="Connected Users" VerticalAlignment="Center" 
+                   Foreground="Gray" FontWeight="Medium"
+                   Margin="8,0,0,0"/>
+            <TextBlock x:Name="ConnectedUserBox" Grid.Row="1" Foreground="Gray" FontWeight="Medium"/>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBox x:Name="sender" Grid.Column="0" Grid.Row="0" Background="Transparent"
+                           Foreground="Gray" FontSize="20" 
+                           TextAlignment="Center" FontWeight="Medium"/>
+                <TextBox x:Name="password" Grid.Column="1" Grid.Row="0" Background="Transparent"
+                           Foreground="Gray" FontSize="20" 
+                           TextAlignment="Center" FontWeight="Medium"/>
+                <Button Grid.ColumnSpan="2" Grid.Row="1" Content="Login" 
+                        Background="Gray" FontWeight="Medium"
+                        Foreground="DarkGray" Click="Login"/>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Column="2" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="50" Foreground="Gray" FontWeight="Medium"/>
+            <TextBlock x:Name="msgbox" Grid.Row="1" TextWrapping="Wrap" Foreground="gray" FontWeight="Medium" FontSize="25"></TextBlock>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="90"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="msg" Grid.Row="1"
+                         Background="Transparent" Text="TEST" FontSize="25" 
+                         FontWeight="Medium" Foreground="gray"
+                          VerticalContentAlignment="Center"/>
+                <Button Grid.Column="2" Background="gray"
+                        Content="Send" FontWeight="Medium" Foreground="DarkGray" Click="Button_Click"></Button>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>
