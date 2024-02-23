@@ -26,11 +26,6 @@ namespace Server
 
 
         private Server(string _ip, int _port)
-
-    public static Server GetInstance(string ip = "127.0.0.1", int port = 1302)
-    {
-        if (instance == null)
-
         {
             Ip = IPAddress.Parse(_ip);
             Port = _port;
