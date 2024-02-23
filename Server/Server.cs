@@ -104,12 +104,13 @@ namespace Server
                             SendToClient(client, message);
                             break;
                         case "login":
+                            SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
                             break;
                         case "register":
                             RegisterUser(data, client);
                             break;
                         case "message":
-                            SendMessage(data.Recipient!, new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
+                            SendMessage(new Message() { Type = data.Type, MessageContents = data.MessageContents, Sender = data.Sender });
                             break;
                         default:
                             break;
@@ -124,7 +125,7 @@ namespace Server
             }
         }
 
-        private void SendMessage(string username, Message message)
+        private void SendMessage(Message message)
         {
             foreach (var tcp in connectedClients)
             {
