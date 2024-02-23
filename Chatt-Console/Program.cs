@@ -13,14 +13,17 @@ namespace Server
         connection:
             try
             {
-                TcpClient client = new TcpClient("2.tcp.eu.ngrok.io", 15615);
+                TcpClient client = new TcpClient("127.0.0.1", 1302);
 
                 NetworkStream stream = client.GetStream();
 
                 Console.WriteLine("Enter your name: ");
                 message.Sender = Console.ReadLine();
                 message.Username = message.Sender;
-                message.Type = "message";
+                message.Password = "hello";
+                message.Type = "getallusers";
+                //message.Type = "register";
+
 
                 Console.WriteLine("Enter recipient name: ");
                 message.Recipient = Console.ReadLine();

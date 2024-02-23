@@ -4,10 +4,13 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-class App
+namespace Server
 {
-    public static void Main()
+    internal class Program
     {
-        Server.GetInstance().InitializeServer();
+        public static void Main()
+        {
+            Server.GetInstance().InitializeServer();
+        }
     }
 }
