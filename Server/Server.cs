@@ -23,7 +23,7 @@ class Server
         Port = _port;
     }
 
-    public static Server GetInstance(string ip = "192.168.0.112", int port = 1302)
+    public static Server GetInstance(string ip = "127.0.0.1", int port = 1302)
     {
         if (instance == null)
         {
@@ -61,16 +61,15 @@ class Server
         {
             while (true)
             {
-                byte[] buffer = new byte[1024]; //1 KB
+                byte[] buffer = new byte[1024]; 
                 int recv = stream.Read(buffer, 0, buffer.Length);
-                if (recv == 0) break;
+
+                if (recv == 0) { break; }
 
                 string request = Encoding.UTF8.GetString(buffer, 0, recv);
-
-                // Change string type from string to json
                 Message data = JsonSerializer.Deserialize<Message>(request);
 
-                if (data != null) // User gets added when sending first request
+                if (data != null) 
                 {
                     if (!connectedClients.ContainsKey(data.Sender))
                         connectedClients.Add(data.Sender, client);
@@ -79,11 +78,12 @@ class Server
                 switch (data.Type)
                 {
                     case "login":
+                        SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
                         break;
                     case "register":
                         break;
                     case "message":
-                        SendMessage(data.Recipient!, new Message() { MessageContents = data.MessageContents, Sender = data.Sender });
+                        SendMessage(new Message() { MessageContents = data.MessageContents, Sender = data.Sender, Type = data.Type});
                         break;
                     default:
                         break;
@@ -98,7 +98,7 @@ class Server
         }
     }
 
-    private void SendMessage(string username, Message message)
+    private void SendMessage(Message message)
     {
         foreach (var tcp in connectedClients)
         {
