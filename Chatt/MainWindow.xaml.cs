@@ -67,8 +67,8 @@ namespace Chatt
          {
              if (!textblock.Dispatcher.CheckAccess())
              {
-                 msgbox.Dispatcher.Invoke(() => UpdateTextBox(text,textblock));
-                 return;
+                textblock.Dispatcher.Invoke(() => UpdateTextBox(text,textblock));
+                return;
              }
              textblock.Text += text + "\n";
          }
