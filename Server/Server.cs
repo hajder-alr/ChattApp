@@ -44,7 +44,7 @@ namespace Server
 
         public void InitializeServer()
         {
-            if (TcpListener == null)
+			if (TcpListener == null)
             {
                 TcpListener = new TcpListener(Ip, Port);
                 TcpListener.Start();
@@ -149,7 +149,7 @@ namespace Server
                 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
                 db.Add(new Database.Models.User { Username = data.Username, Password = data.Password });
                 db.SaveChanges();
-
+                
                 Message message = new Message();
                 message.Type = "register";
                 message.MessageContents = "Success";

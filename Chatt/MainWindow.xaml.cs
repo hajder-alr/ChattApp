@@ -25,7 +25,8 @@ namespace Chatt
         TcpClient client;
         NetworkStream stream;
         Message message;
-        public MainWindow()
+		public string PasswordInput { get; set; }
+		public MainWindow()
         {
             InitializeComponent();
         }
@@ -102,21 +103,22 @@ namespace Chatt
              catch (ThreadAbortException){ Console.WriteLine("Receiving thread aborted."); }
              finally { stream.Close(); client.Close(); }
          }
-         private void Startup() 
+         private void Startup(string command) 
          {
              message = new Message();
              connection:
              try
              {
-                 client = new TcpClient("127.0.0.1", 1302);
-                 stream = client.GetStream();
-                 message.Sender = sender.Text;
-                 message.Username = message.Sender;
-                 message.Password = password.Text;
-                 message.Type = "login";
-                 sendDataPacket(message);
-                 Thread receivingThread = new Thread(() => ReceivingTask(stream,client));
-                 receivingThread.Start();
+                client = new TcpClient("127.0.0.1", 1302);
+                stream = client.GetStream();
+                message.Sender = username.Text;
+                message.Username = username.Text;
+                message.Password = PasswordInput;
+                //message.Password = password.Text;
+                message.Type = command;
+                sendDataPacket(message);
+                Thread receivingThread = new Thread(() => ReceivingTask(stream,client));
+                receivingThread.Start();
              }
              catch (Exception)
              {
@@ -126,18 +128,90 @@ namespace Chatt
 
          }
 
-         private void Login(object sender, RoutedEventArgs e)
-         {
-             Startup();
-         }
+        private void Login(object sender, RoutedEventArgs e)
+        {
+            Startup("login");
+        }
 
-         private void sendDataPacket(Message message) 
+		private void Register(object sender, RoutedEventArgs e)
+		{
+			if (username.Text.Length < 4 || username.Text.Length > 16 || username.Text == "Username")
+			{
+				msgbox.Text = "Username needs to be between 4 and 16 characters";
+			}
+			else if (username.Text.Any(char.IsWhiteSpace))
+			{
+				msgbox.Text = "Username cannot contain white space";
+			}
+			else if (PasswordInput.Length < 4 || PasswordInput.Length > 16 || PasswordInput == "password")
+			{
+				msgbox.Text = "Password needs to be between 4 and 16 characters";
+			}
+			else if (PasswordInput.Any(char.IsWhiteSpace))
+			{
+				msgbox.Text = "Password cannot contain white space";
+			}
+			else
+			{
+				Startup("register");
+			}
+		}
+
+		private void sendDataPacket(Message message) 
          {
              string jsonString = JsonSerializer.Serialize(message);
              int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
              byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
              stream.Write(sendData, 0, sendData.Length);
          }
-    }
+
+		private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+		{
+			PasswordInput = passwordBox.Password;
+		}
+		private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
+		{
+			if (passwordBox.Password == "password")
+			{
+				passwordBox.Password = "";
+			}
+		}
+
+		private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
+		{
+			if (string.IsNullOrWhiteSpace(passwordBox.Password))
+			{
+				passwordBox.Password = "password";
+			}
+		}
+		private void PasswordBox_Loaded(object sender, RoutedEventArgs e)
+		{
+			// Check the initial focus state when the program starts
+            PasswordBox_LostFocus(sender, e);
+
+		}
+
+		private void TextBox_GotFocus(object sender, RoutedEventArgs e)
+		{
+			if (username.Text == "Username")
+			{
+				username.Text = "";
+			}
+		}
+
+		private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+		{
+			if (string.IsNullOrWhiteSpace(username.Text))
+			{
+				username.Text = "Username";
+			}
+		}
+
+		private void TextBox_Loaded(object sender, RoutedEventArgs e)
+		{
+			// Check the initial focus state when the program starts
+			TextBox_LostFocus(sender, e);
+		}
+	}
 
 }
