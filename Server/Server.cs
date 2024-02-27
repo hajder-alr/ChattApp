@@ -147,12 +147,14 @@ namespace Server
             try
             {
                 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
+                //Need to add logic to check if username is already taken or not in the database
                 db.Add(new Database.Models.User { Username = data.Username, Password = data.Password });
                 db.SaveChanges();
                 
                 Message message = new Message();
                 message.Type = "register";
-                message.MessageContents = "Success";
+                message.MessageContents = "successful";
+                //message.MessageContents = "failed";
                 SendToClient(client, message);
             }
             catch (Exception e)

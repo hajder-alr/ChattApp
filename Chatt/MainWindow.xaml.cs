@@ -90,6 +90,8 @@ namespace Chatt
                             UpdateTextBox($"[{data.Sender}]", ConnectedUserBox);
                             break;
                         case "register":
+                            if (data.MessageContents == "successful") UpdateTextBox("Account has been created", msgbox);
+                            else UpdateTextBox("User name already taken", msgbox);
                             break;
                         case "message":
                             UpdateTextBox($"[{data.Sender}]: {data.MessageContents}", msgbox);
@@ -176,7 +178,6 @@ namespace Chatt
 				passwordBox.Password = "";
 			}
 		}
-
 		private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
 		{
 			if (string.IsNullOrWhiteSpace(passwordBox.Password))
@@ -190,7 +191,6 @@ namespace Chatt
             PasswordBox_LostFocus(sender, e);
 
 		}
-
 		private void TextBox_GotFocus(object sender, RoutedEventArgs e)
 		{
 			if (username.Text == "Username")
@@ -198,7 +198,6 @@ namespace Chatt
 				username.Text = "";
 			}
 		}
-
 		private void TextBox_LostFocus(object sender, RoutedEventArgs e)
 		{
 			if (string.IsNullOrWhiteSpace(username.Text))
@@ -206,7 +205,6 @@ namespace Chatt
 				username.Text = "Username";
 			}
 		}
-
 		private void TextBox_Loaded(object sender, RoutedEventArgs e)
 		{
 			// Check the initial focus state when the program starts
