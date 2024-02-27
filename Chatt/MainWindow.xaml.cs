@@ -94,8 +94,8 @@ namespace Chatt
                     switch (data.Type)
                     {
                         case "login":
-                            if (data.Contents is User l)
-                                UpdateTextBox($"[{l.Username}]", ConnectedUserBox);
+                            User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
+                            UpdateTextBox($"[{user.Username}]", ConnectedUserBox);
                             break;
                         case "register":
                             break;

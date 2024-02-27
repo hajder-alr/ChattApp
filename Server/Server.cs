@@ -100,7 +100,7 @@ namespace Server
                         case "login":
                             User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
-                            SendMessage(new Request() { Type = data.Type });
+                            SendMessage(new Request() { Type = data.Type, Contents = user });
 
                             if (!connectedClients.ContainsKey(user.Username))
                                 connectedClients.Add(user.Username, client);
