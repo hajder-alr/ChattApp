@@ -18,13 +18,15 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
 using System.Windows.Interop;
+using System.Diagnostics;
+
 namespace Chatt
 {
     public partial class MainWindow : Window
     {
         TcpClient client;
         NetworkStream stream;
-        Message message;
+        //Request request;
         public MainWindow()
         {
             InitializeComponent();
@@ -32,112 +34,118 @@ namespace Chatt
         private void BorderClick(object sender, RoutedEventArgs e)
         {
             var btn = sender as Button;
-            switch (int.Parse(btn.Uid)) 
-            { 
+            switch (int.Parse(btn.Uid))
+            {
                 case 1:
                     Application.Current.MainWindow.WindowState = WindowState.Minimized;
                     break;
                 case 2:
-                    if(Application.Current.MainWindow.WindowState != WindowState.Maximized) 
+                    if (Application.Current.MainWindow.WindowState != WindowState.Maximized)
                     { Application.Current.MainWindow.WindowState = WindowState.Maximized; }
                     else { Application.Current.MainWindow.WindowState = WindowState.Normal; }
                     break;
                 case 3:
                     Application.Current.Shutdown();
-                    break;   
+                    break;
 
             }
-            
+
         }
 
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(e.LeftButton == MouseButtonState.Pressed) 
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
             }
         }
-         private void Button_Click(object sender, RoutedEventArgs e)
-         {    
-             message.MessageContents = msg.Text;
-             message.Type = "message";
-             sendDataPacket(message);
-         }
-         private  void UpdateTextBox(string text,TextBlock textblock)
-         {
-             if (!textblock.Dispatcher.CheckAccess())
-             {
-                textblock.Dispatcher.Invoke(() => UpdateTextBox(text,textblock));
-                return;
-             }
-             textblock.Text += text + "\n";
-         }
+        private void Button_Click(object s, RoutedEventArgs e)
+        {
+            Request request = new Request();
 
-         private void ReceivingTask(NetworkStream stream,TcpClient client)
-         {
-             try
-             {
-                 while (true)
-                 {
-                     byte[] receiveData = new byte[1024];
-                     int bytesReceived = stream.Read(receiveData, 0, receiveData.Length);
-                     string response = Encoding.UTF8.GetString(receiveData, 0, bytesReceived);
-                     Message data = JsonSerializer.Deserialize<Message>(response)!;
+            request.Type = "message";
+
+            request.Contents = new Message() { Contents = msg.Text, Sender = sender.Text, Recipient = null };
+
+            sendDataPacket(request);
+        }
+        private void UpdateTextBox(string text, TextBlock textblock)
+        {
+            if (!textblock.Dispatcher.CheckAccess())
+            {
+                textblock.Dispatcher.Invoke(() => UpdateTextBox(text, textblock));
+                return;
+            }
+            textblock.Text += text + "\n";
+        }
+
+        private void ReceivingTask(NetworkStream stream, TcpClient client)
+        {
+            try
+            {
+                while (true)
+                {
+                    byte[] receiveData = new byte[1024];
+                    int bytesReceived = stream.Read(receiveData, 0, receiveData.Length);
+                    string response = Encoding.UTF8.GetString(receiveData, 0, bytesReceived);
+
+                    Request data = JsonSerializer.Deserialize<Request>(response)!;
+
                     switch (data.Type)
                     {
                         case "login":
-                            UpdateTextBox($"[{data.Sender}]", ConnectedUserBox);
+                            if (data.Contents is Login l)
+                                UpdateTextBox($"[{l.Username}]", ConnectedUserBox);
                             break;
                         case "register":
                             break;
                         case "message":
-                            UpdateTextBox($"[{data.Sender}]: {data.MessageContents}", msgbox);
+                            Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
+                            UpdateTextBox($"[{x.Sender}]: {x.Contents}", msgbox);
                             break;
                         default:
                             break;
                     }
-                    
-                 }
-             }
-             catch (ThreadAbortException){ Console.WriteLine("Receiving thread aborted."); }
-             finally { stream.Close(); client.Close(); }
-         }
-         private void Startup() 
-         {
-             message = new Message();
-             connection:
-             try
-             {
-                 client = new TcpClient("127.0.0.1", 1302);
-                 stream = client.GetStream();
-                 message.Sender = sender.Text;
-                 message.Username = message.Sender;
-                 message.Password = password.Text;
-                 message.Type = "login";
-                 sendDataPacket(message);
-                 Thread receivingThread = new Thread(() => ReceivingTask(stream,client));
-                 receivingThread.Start();
-             }
-             catch (Exception)
-             {
-                 Console.WriteLine("failed to connect...");
-                 goto connection;
-             }
+                }
+            }
+            catch (ThreadAbortException) { Console.WriteLine("Receiving thread aborted."); }
+            finally { stream.Close(); client.Close(); }
+        }
+        private void Startup()
+        {
+            Request request = new Request();
+        connection:
+            try
+            {
+                client = new TcpClient("127.0.0.1", 1302);
+                stream = client.GetStream();
 
-         }
+                request.Type = "login";
+                request.Contents = new Login() { Password = password.Text, Username = sender.Text };
 
-         private void Login(object sender, RoutedEventArgs e)
-         {
-             Startup();
-         }
+                sendDataPacket(request);
 
-         private void sendDataPacket(Message message) 
-         {
-             string jsonString = JsonSerializer.Serialize(message);
-             int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
-             byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
-             stream.Write(sendData, 0, sendData.Length);
-         }
+                Thread receivingThread = new Thread(() => ReceivingTask(stream, client));
+                receivingThread.Start();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("failed to connect...");
+                goto connection;
+            }
+        }
+
+        private void Login(object sender, RoutedEventArgs e)
+        {
+            Startup();
+        }
+
+        private void sendDataPacket(Request message)
+        {
+            string jsonString = JsonSerializer.Serialize(message);
+            int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
+            byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
+            stream.Write(sendData, 0, sendData.Length);
+        }
     }
-
 }

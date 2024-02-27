@@ -10,6 +10,7 @@ using System.Text.Json;
 using Server.Database;
 using System.Reflection.Metadata;
 using Server.Database.Models;
+using Types;
 
 namespace Server
 {
@@ -23,7 +24,6 @@ namespace Server
         private readonly Dictionary<string, TcpClient> connectedClients = new();
 
         ApplicationDbContext db = new ApplicationDbContext();
-
 
         private Server(string _ip, int _port)
         {
@@ -78,13 +78,7 @@ namespace Server
                     string request = Encoding.UTF8.GetString(buffer, 0, recv);
 
                     // Change string type from string to json
-                    Message data = JsonSerializer.Deserialize<Message>(request);
-
-                    if (data != null) // User gets added when sending first request
-                    {
-                        if (!connectedClients.ContainsKey(data.Sender))
-                            connectedClients.Add(data.Sender, client);
-                    }
+                    Request data = JsonSerializer.Deserialize<Request>(request);
 
                     switch (data.Type)
                     {
@@ -100,17 +94,32 @@ namespace Server
                                 temp += user.Password + "/n";
                             }
 
-                            Message message = new Message { MessageContents = temp };
+                            Request message = new Request { Type = "message", Contents = new Types.Message() { Contents = "success" } };
+
                             SendToClient(client, message);
                             break;
                         case "login":
-                            SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
+                            Types.Login login = JsonSerializer.Deserialize<Types.Login>((JsonElement)data.Contents);
+
+                            SendMessage(new Request() { Type = data.Type });
+
+                            if (!connectedClients.ContainsKey(login.Username))
+                                connectedClients.Add(login.Username, client);
+
                             break;
                         case "register":
                             RegisterUser(data, client);
                             break;
                         case "message":
-                            SendMessage(new Message() { Type = data.Type, MessageContents = data.MessageContents, Sender = data.Sender });
+                            Types.Message x = JsonSerializer.Deserialize<Types.Message>((JsonElement)data.Contents);
+
+                            Console.WriteLine(data.Contents.GetType().FullName);
+
+                            if (x is Types.Message m)
+                            {
+                                SendMessage(new Request() { Type = "message", Contents = new Types.Message() { Contents = m.Contents, Sender = m.Sender, Recipient = m.Recipient } });
+                                Console.Write(m.Contents);
+                            }
                             break;
                         default:
                             break;
@@ -125,7 +134,7 @@ namespace Server
             }
         }
 
-        private void SendMessage(Message message)
+        private void SendMessage(Request message)
         {
             foreach (var tcp in connectedClients)
             {
@@ -138,21 +147,23 @@ namespace Server
 
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Flush();
-               
+
             }
         }
 
-        private void RegisterUser(Message data, TcpClient client)
+        private void RegisterUser(Request data, TcpClient client)
         {
             try
             {
+                Login l = (Login)data.Contents;
+
                 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
-                db.Add(new Database.Models.User { Username = data.Username, Password = data.Password });
+                db.Add(new Database.Models.User { Username = l.Username, Password = l.Password });
                 db.SaveChanges();
 
-                Message message = new Message();
+                Request message = new Request();
                 message.Type = "register";
-                message.MessageContents = "Success";
+                message.Contents = l;
                 SendToClient(client, message);
             }
             catch (Exception e)
@@ -161,8 +172,7 @@ namespace Server
             }
         }
 
-
-        private void SendToClient(TcpClient tcpClient, Message message)
+        private void SendToClient(TcpClient tcpClient, Request message)
         {
             NetworkStream stream = tcpClient.GetStream();
 
