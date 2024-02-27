@@ -10,7 +10,6 @@ using System.Text.Json;
 using Server.Database;
 using System.Reflection.Metadata;
 using Server.Database.Models;
-using Types;
 
 namespace Server
 {
@@ -88,36 +87,36 @@ namespace Server
                             users = db.Users.ToList();
 
                             string temp = "";
-                            foreach (User user in users)
+                            foreach (User user1 in users)
                             {
-                                temp += user.Username + ";";
-                                temp += user.Password + "/n";
+                                temp += user1.Username + ";";
+                                temp += user1.Password + "/n";
                             }
 
-                            Request message = new Request { Type = "message", Contents = new Types.Message() { Contents = "success" } };
+                            Request message = new Request { Type = "message", Contents = new Message() { Contents = "success" } };
 
                             SendToClient(client, message);
                             break;
                         case "login":
-                            Types.Login login = JsonSerializer.Deserialize<Types.Login>((JsonElement)data.Contents);
+                            User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
                             SendMessage(new Request() { Type = data.Type });
 
-                            if (!connectedClients.ContainsKey(login.Username))
-                                connectedClients.Add(login.Username, client);
+                            if (!connectedClients.ContainsKey(user.Username))
+                                connectedClients.Add(user.Username, client);
 
                             break;
                         case "register":
                             RegisterUser(data, client);
                             break;
                         case "message":
-                            Types.Message x = JsonSerializer.Deserialize<Types.Message>((JsonElement)data.Contents);
+                            Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
 
                             Console.WriteLine(data.Contents.GetType().FullName);
 
-                            if (x is Types.Message m)
+                            if (x is Message m)
                             {
-                                SendMessage(new Request() { Type = "message", Contents = new Types.Message() { Contents = m.Contents, Sender = m.Sender, Recipient = m.Recipient } });
+                                SendMessage(new Request() { Type = "message", Contents = new Message() { Contents = m.Contents, Sender = m.Sender, Recipient = m.Recipient } });
                                 Console.Write(m.Contents);
                             }
                             break;
@@ -155,7 +154,7 @@ namespace Server
         {
             try
             {
-                Login l = (Login)data.Contents;
+                User l = (User)data.Contents;
 
                 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
                 db.Add(new Database.Models.User { Username = l.Username, Password = l.Password });

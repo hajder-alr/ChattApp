@@ -94,7 +94,7 @@ namespace Chatt
                     switch (data.Type)
                     {
                         case "login":
-                            if (data.Contents is Login l)
+                            if (data.Contents is User l)
                                 UpdateTextBox($"[{l.Username}]", ConnectedUserBox);
                             break;
                         case "register":
@@ -121,7 +121,7 @@ namespace Chatt
                 stream = client.GetStream();
 
                 request.Type = "login";
-                request.Contents = new Login() { Password = password.Text, Username = sender.Text };
+                request.Contents = new User() { Password = password.Text, Username = sender.Text };
 
                 sendDataPacket(request);
 
