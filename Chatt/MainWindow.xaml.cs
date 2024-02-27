@@ -24,7 +24,7 @@ namespace Chatt
 {
     public partial class MainWindow : Window
     {
-        TcpClient client;
+		TcpClient client;
         NetworkStream stream;
         //Request request;
         public MainWindow()
@@ -61,14 +61,22 @@ namespace Chatt
         }
         private void Button_Click(object s, RoutedEventArgs e)
         {
-            Request request = new Request();
+            try
+            {
+                Request request = new Request();
 
-            request.Type = "message";
+                request.Type = "message";
 
-            request.Contents = new Message() { Contents = msg.Text, Sender = sender.Text, Recipient = null };
+                request.Contents = new Message() { Contents = msg.Text, Sender = sender.Text, Recipient = null };
 
-            sendDataPacket(request);
+                sendDataPacket(request);
+            }
+            catch 
+            {
+				UpdateTextBox($"Logga in", msgbox); //Lägger alltid till en ny rad text i textloggen, om man skriver utan att vara inloggad
+            }
         }
+
         private void UpdateTextBox(string text, TextBlock textblock)
         {
             if (!textblock.Dispatcher.CheckAccess())
@@ -79,18 +87,16 @@ namespace Chatt
             textblock.Text += text + "\n";
         }
 
-        private void ReceivingTask(NetworkStream stream, TcpClient client)
-        {
-            try
-            {
-                while (true)
-                {
+         private void ReceivingTask(NetworkStream stream,TcpClient client)
+         {
+			try
+             {
+                 while (true)
+                 {
                     byte[] receiveData = new byte[1024];
                     int bytesReceived = stream.Read(receiveData, 0, receiveData.Length);
                     string response = Encoding.UTF8.GetString(receiveData, 0, bytesReceived);
-
                     Request data = JsonSerializer.Deserialize<Request>(response)!;
-
                     switch (data.Type)
                     {
                         case "login":
@@ -103,6 +109,14 @@ namespace Chatt
                             Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
                             UpdateTextBox($"[{x.Sender}]: {x.Contents}", msgbox);
                             break;
+                        case "error":
+							//  MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+							//  UpdateTextBox($"[{data.Sender}]: fel", msgbox);
+							//  MessageBox.Show("Login Error",$"[{data.Sender}]: fel", MessageBoxButton.OK, MessageBoxImage.Error);
+
+							MessageBox.Show("Redan Använt Namn", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+							//  ^Skickar detta till alla clienter, men ska bara till den som gör fel
+							break;
                         default:
                             break;
                     }
@@ -111,12 +125,11 @@ namespace Chatt
             catch (ThreadAbortException) { Console.WriteLine("Receiving thread aborted."); }
             finally { stream.Close(); client.Close(); }
         }
-        private void Startup()
-        {
-            Request request = new Request();
-        connection:
+         private void Startup() 
+         {
+            connection:
             try
-            {
+            {  //Om man ändrar sitt usernamn efter man har valt ett så anslutar 2 (1+1) stycken av den nya och ökar varje gång
                 client = new TcpClient("127.0.0.1", 1302);
                 stream = client.GetStream();
 

@@ -61,7 +61,7 @@
                 <TextBox x:Name="password" Grid.Column="1" Grid.Row="0" Background="Transparent"
                            Foreground="Gray" FontSize="20" 
                            TextAlignment="Center" FontWeight="Medium"/>
-                <Button Grid.ColumnSpan="2" Grid.Row="1" Content="Login" 
+                <Button x:Name="btn_login"  Grid.ColumnSpan="2" Grid.Row="1" Content="Login" 
                         Background="Gray" FontWeight="Medium"
                         Foreground="DarkGray" Click="Login"/>
             </Grid>

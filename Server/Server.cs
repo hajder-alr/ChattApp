@@ -10,6 +10,7 @@ using System.Text.Json;
 using Server.Database;
 using System.Reflection.Metadata;
 using Server.Database.Models;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Server
 {
@@ -62,7 +63,8 @@ namespace Server
             }
         }
 
-        private void HandleRequest(TcpClient client)
+		public List<string> loggedIn = new List<string>();    //Gör som den checkar databasen istället
+		private void HandleRequest(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
             try
@@ -100,12 +102,26 @@ namespace Server
                         case "login":
                             User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
-                            SendMessage(new Request() { Type = data.Type, Contents = user });
+							bool uniqueCheck = true;
+							foreach (string online in loggedIn)
+							{
+								if (online.Contains(user.Username))    //Ändra som den checkar databas
+								{
+									uniqueCheck = false;
+									break;
+								}
+							}
 
-                            if (!connectedClients.ContainsKey(user.Username))
-                                connectedClients.Add(user.Username, client);
-
-                            break;
+							if (uniqueCheck)
+							{
+                                SendMessage(new Request() { Type = data.Type, Contents = user });
+								loggedIn.Add(data.Sender);
+							}
+							else
+							{
+								//SendMessage(new Request() { Type = "error"});
+							}
+							break;
                         case "register":
                             RegisterUser(data, client);
                             break;
