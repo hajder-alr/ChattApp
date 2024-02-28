@@ -63,8 +63,8 @@ namespace Server
             }
         }
 
-		public List<string> loggedIn = new List<string>();    //Gör som den checkar databasen istället
-		private void HandleRequest(TcpClient client)
+        //public List<string> loggedIn = new List<string>();    //Gör som den checkar databasen istället
+        private void HandleRequest(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
             try
@@ -102,26 +102,24 @@ namespace Server
                         case "login":
                             User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
-							bool uniqueCheck = true;
-							foreach (string online in loggedIn)
-							{
-								if (online.Contains(user.Username))    //Ändra som den checkar databas
-								{
-									uniqueCheck = false;
-									break;
-								}
-							}
+                            bool uniqueCheck = true;
+                            if (connectedClients.ContainsKey(user.Username))
+                            {
+                                uniqueCheck = false;
+                                break;
+                            }
 
-							if (uniqueCheck)
-							{
+                            if (uniqueCheck)
+                            {
                                 SendMessage(new Request() { Type = data.Type, Contents = user });
-								loggedIn.Add(data.Sender);
-							}
-							else
-							{
-								//SendMessage(new Request() { Type = "error"});
-							}
-							break;
+                                connectedClients.Add(user.Username, client);
+                                Console.WriteLine("Added user" + user.Username);
+                            }
+                            else
+                            {
+                                SendMessage(new Request() { Type = "error" });
+                            }
+                            break;
                         case "register":
                             RegisterUser(data, client);
                             break;
