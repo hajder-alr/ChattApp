@@ -11,11 +11,19 @@ using Server.Database;
 using System.Reflection.Metadata;
 using Server.Database.Models;
 using static System.Net.Mime.MediaTypeNames;
+using Microsoft.Data.Sqlite;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Server
 {
+    //"Relogga" skapar 2 stycken av den nya
+    //
     class Server
     {
+        string inputname = "dennis";
+        string query = "SELECT Username FROM User WHERE Username=inputname";
+        
+        //
         private static Server? instance = null;
         private TcpListener? TcpListener { get; set; } = null;
         private IPAddress Ip { get; set; }
@@ -104,26 +112,47 @@ namespace Server
 
                             Message message = new Message { MessageContents = temp };
                             SendToClient(client, message);
-                            break;
+							break;
                         case "login":
-							bool uniqueCheck = true;
-							foreach (string online in loggedIn)
+							string inputname = data.Sender;
+							using (var dbContext = new ApplicationDbContext())
 							{
-								if (online.Contains(data.Sender))    //Ändra som den checkar databas
+								using (var ApplicationDbContext = new ApplicationDbContext())
 								{
-									uniqueCheck = false;
-									break;
+									var user = dbContext.Users.FirstOrDefault(u => u.Username == inputname);
+									if (user != null)
+									{
+                                        //Checkar om det finns något i databasen med namnet och om det finns gå vidare
+										//OM DET FINNS
+										bool uniqueCheck = true;
+										foreach (string online in loggedIn)
+										{
+											if (online.Contains(data.Sender))    //Ändra som den checkar databas
+											{
+												uniqueCheck = false;
+												break;
+											}
+										}
+										if (uniqueCheck)
+										{
+											SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
+											loggedIn.Add(data.Sender);
+										}
+										else
+										{
+											SendMessage(new Message() { Type = "error", Sender = data.Sender });
+										}
+
+
+									}
+									else
+									{
+										//OM INTE FINNS
+										SendMessage(new Message() { Type = "error1", Sender = data.Sender });
+									}
 								}
 							}
-							if (uniqueCheck)
-							{
-								SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
-								loggedIn.Add(data.Sender);
-							}
-							else
-							{
-								SendMessage(new Message() { Type = "error", Sender = data.Sender });
-							}
+							
 							break;
                         case "register":
                             RegisterUser(data, client);

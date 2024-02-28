@@ -101,14 +101,18 @@ namespace Chatt
                             UpdateTextBox($"[{data.Sender}]: {data.MessageContents}", msgbox);
                             break;
                         case "error":
-							//  MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
-							//  UpdateTextBox($"[{data.Sender}]: fel", msgbox);
-							//  MessageBox.Show("Login Error",$"[{data.Sender}]: fel", MessageBoxButton.OK, MessageBoxImage.Error);
-
-							MessageBox.Show("Redan Använt Namn", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            /*
+							MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+							UpdateTextBox($"[{data.Sender}]: fel", msgbox);
+							MessageBox.Show("Login Error",$"[{data.Sender}]: fel", MessageBoxButton.OK, MessageBoxImage.Error);
+                            */
+							MessageBox.Show("Redan inloggad", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
 							//  ^Skickar detta till alla clienter, men ska bara till den som gör fel
 							break;
-                        default:
+						case "error1":
+							MessageBox.Show("Användare finns ej, Ledigt Namn", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+							break;
+						default:
                             break;
                     }
                     
