@@ -17,10 +17,11 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 namespace Server
 {
     //"Relogga" skapar 2 stycken av den nya
-    //
+    //Ändra logga in knapp när inloggan(stäng av den, ändra den)
+    //Fixa Online user så den uppdaterar när listan blir uppdaterad
+
     class Server
     {
-        //
         private static Server? instance = null;
         private TcpListener? TcpListener { get; set; } = null;
         private IPAddress Ip { get; set; }
@@ -29,7 +30,6 @@ namespace Server
         private readonly Dictionary<string, TcpClient> connectedClients = new();
 
         ApplicationDbContext db = new ApplicationDbContext();
-
 
         private Server(string _ip, int _port)
         {
@@ -125,7 +125,7 @@ namespace Server
 										bool uniqueCheck = true;
 										foreach (string online in loggedIn)
 										{
-											if (online.Contains(data.Sender))    //Ändra som den checkar databas
+											if (online.Contains(data.Sender))    //Ändra som den checkar databas(Går ta bort?)
 											{
 												uniqueCheck = false;
 												break;
@@ -133,8 +133,8 @@ namespace Server
 										}
 										if (uniqueCheck)
 										{
-											SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
-											loggedIn.Add(data.Sender);
+											SendMessage(new Message() { Type = data.Type, Sender = data.Sender }); //(fel här?)
+											//loggedIn.Add(data.Sender);
 										}
 										else
 										{
