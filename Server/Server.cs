@@ -20,9 +20,6 @@ namespace Server
     //
     class Server
     {
-        string inputname = "dennis";
-        string query = "SELECT Username FROM User WHERE Username=inputname";
-        
         //
         private static Server? instance = null;
         private TcpListener? TcpListener { get; set; } = null;
@@ -115,11 +112,12 @@ namespace Server
 							break;
                         case "login":
 							string inputname = data.Sender;
+							string inputPassword = data.Password;
 							using (var dbContext = new ApplicationDbContext())
 							{
 								using (var ApplicationDbContext = new ApplicationDbContext())
 								{
-									var user = dbContext.Users.FirstOrDefault(u => u.Username == inputname);
+                                    var user = dbContext.Users.FirstOrDefault(u => u.Username == inputname && u.Password == inputPassword);
 									if (user != null)
 									{
                                         //Checkar om det finns något i databasen med namnet och om det finns gå vidare
@@ -142,8 +140,6 @@ namespace Server
 										{
 											SendMessage(new Message() { Type = "error", Sender = data.Sender });
 										}
-
-
 									}
 									else
 									{

@@ -110,7 +110,7 @@ namespace Chatt
 							//  ^Skickar detta till alla clienter, men ska bara till den som gör fel
 							break;
 						case "error1":
-							MessageBox.Show("Användare finns ej, Ledigt Namn", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+							MessageBox.Show("Användare finns ej eller fel lössenord", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
 							break;
 						default:
                             break;
