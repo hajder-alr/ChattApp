@@ -18,13 +18,15 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Threading;
 using System.Windows.Interop;
+using System.Diagnostics;
+
 namespace Chatt
 {
     public partial class MainWindow : Window
     {
-		TcpClient client;
+        TcpClient client;
         NetworkStream stream;
-        Message message;
+        //Request request;
         public MainWindow()
         {
             InitializeComponent();
@@ -32,127 +34,132 @@ namespace Chatt
         private void BorderClick(object sender, RoutedEventArgs e)
         {
             var btn = sender as Button;
-            switch (int.Parse(btn.Uid)) 
-            { 
+            switch (int.Parse(btn.Uid))
+            {
                 case 1:
                     Application.Current.MainWindow.WindowState = WindowState.Minimized;
                     break;
                 case 2:
-                    if(Application.Current.MainWindow.WindowState != WindowState.Maximized) 
+                    if (Application.Current.MainWindow.WindowState != WindowState.Maximized)
                     { Application.Current.MainWindow.WindowState = WindowState.Maximized; }
                     else { Application.Current.MainWindow.WindowState = WindowState.Normal; }
                     break;
                 case 3:
                     Application.Current.Shutdown();
-                    break;   
+                    break;
 
             }
-            
+
         }
 
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(e.LeftButton == MouseButtonState.Pressed) 
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
             }
         }
-         private void Button_Click(object sender, RoutedEventArgs e)
-         {
+        private void Button_Click(object s, RoutedEventArgs e)
+        {
             try
             {
-				message.MessageContents = msg.Text;
-				message.Type = "message";
-				sendDataPacket(message);
-			}
-            catch 
-            {
-				UpdateTextBox($"Logga in", msgbox); //Lägger alltid till en ny rad text i textloggen, om man skriver utan att vara inloggad
-            }
-         }
-         private  void UpdateTextBox(string text,TextBlock textblock)
-         {
-             if (!textblock.Dispatcher.CheckAccess())
-             {
-                textblock.Dispatcher.Invoke(() => UpdateTextBox(text,textblock));
-                return;
-             }
-             textblock.Text += text + "\n";
-         }
+                Request request = new Request();
 
-         private void ReceivingTask(NetworkStream stream,TcpClient client)
-         {
-			try
-             {
-                 while (true)
-                 {
+                request.Type = "message";
+
+                request.Contents = new Message() { Contents = msg.Text, Sender = sender.Text, Recipient = null };
+
+                sendDataPacket(request);
+            }
+            catch
+            {
+                UpdateTextBox($"Logga in", msgbox); //Lägger alltid till en ny rad text i textloggen, om man skriver utan att vara inloggad
+            }
+        }
+
+        private void UpdateTextBox(string text, TextBlock textblock)
+        {
+            if (!textblock.Dispatcher.CheckAccess())
+            {
+                textblock.Dispatcher.Invoke(() => UpdateTextBox(text, textblock));
+                return;
+            }
+            textblock.Text += text + "\n";
+        }
+
+        private void ReceivingTask(NetworkStream stream, TcpClient client)
+        {
+            try
+            {
+                while (true)
+                {
                     byte[] receiveData = new byte[1024];
                     int bytesReceived = stream.Read(receiveData, 0, receiveData.Length);
                     string response = Encoding.UTF8.GetString(receiveData, 0, bytesReceived);
-                    Message data = JsonSerializer.Deserialize<Message>(response)!;
+                    Request data = JsonSerializer.Deserialize<Request>(response)!;
                     switch (data.Type)
                     {
-						case "login":
-							UpdateTextBox($"[{data.Sender}]", ConnectedUserBox);
-							break;
+                        case "login":
+                            User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
+                            UpdateTextBox($"[{user.Username}]", ConnectedUserBox);
+                            break;
                         case "register":
                             break;
                         case "message":
-                            UpdateTextBox($"[{data.Sender}]: {data.MessageContents}", msgbox);
+                            Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
+                            UpdateTextBox($"[{x.Sender}]: {x.Contents}", msgbox);
                             break;
                         case "error":
-							//  MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
-							//  UpdateTextBox($"[{data.Sender}]: fel", msgbox);
-							//  MessageBox.Show("Login Error",$"[{data.Sender}]: fel", MessageBoxButton.OK, MessageBoxImage.Error);
+                            //  MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+                            //  UpdateTextBox($"[{data.Sender}]: fel", msgbox);
+                            //  MessageBox.Show("Login Error",$"[{data.Sender}]: fel", MessageBoxButton.OK, MessageBoxImage.Error);
 
-							MessageBox.Show("Redan Använt Namn", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
-							//  ^Skickar detta till alla clienter, men ska bara till den som gör fel
-							break;
+                            MessageBox.Show("Redan Använt Namn", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            //  ^Skickar detta till alla clienter, men ska bara till den som gör fel
+                            break;
                         default:
                             break;
                     }
-                    
-                 }
-             }
-             catch (ThreadAbortException){ Console.WriteLine("Receiving thread aborted."); }
-             finally { stream.Close(); client.Close(); }
-         }
-         private void Startup() 
-         {
-             message = new Message();
-             connection:
-             try
-             {          //Om man ändrar sitt usernamn efter man har valt ett så anslutar 2 (1+1) stycken av den nya och ökar varje gång
-                 client = new TcpClient("127.0.0.1", 1302);
-                 stream = client.GetStream();
-                 message.Sender = sender.Text;
-                 message.Username = message.Sender;
-                 message.Password = password.Text;
-                 message.Type = "login";
-                 sendDataPacket(message);
-                 Thread receivingThread = new Thread(() => ReceivingTask(stream,client));
-                 receivingThread.Start();
-             }
-             catch (Exception)
-             {
-                 Console.WriteLine("failed to connect...");
-                 goto connection;
-             }
+                }
+            }
+            catch (ThreadAbortException) { Console.WriteLine("Receiving thread aborted."); }
+            finally { stream.Close(); client.Close(); }
+        }
+        private void Startup()
+        {
+        connection:
+            try
+            {  //Om man ändrar sitt usernamn efter man har valt ett så anslutar 2 (1+1) stycken av den nya och ökar varje gång
+                client = new TcpClient("127.0.0.1", 1302);
+                stream = client.GetStream();
+                Request request = new Request();
 
-         }
+                request.Type = "login";
+                request.Contents = new User() { Password = password.Text, Username = sender.Text };
 
-         private void Login(object sender, RoutedEventArgs e)
-         {
-             Startup();
-         }
+                sendDataPacket(request);
 
-         private void sendDataPacket(Message message) 
-         {
-             string jsonString = JsonSerializer.Serialize(message);
-             int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
-             byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
-             stream.Write(sendData, 0, sendData.Length);
-         }
+                Thread receivingThread = new Thread(() => ReceivingTask(stream, client));
+                receivingThread.Start();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("failed to connect...");
+                goto connection;
+            }
+        }
+
+        private void Login(object sender, RoutedEventArgs e)
+        {
+            Startup();
+        }
+
+        private void sendDataPacket(Request message)
+        {
+            string jsonString = JsonSerializer.Serialize(message);
+            int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
+            byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
+            stream.Write(sendData, 0, sendData.Length);
+        }
     }
-
 }

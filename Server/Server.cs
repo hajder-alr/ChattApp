@@ -25,7 +25,6 @@ namespace Server
 
         ApplicationDbContext db = new ApplicationDbContext();
 
-
         private Server(string _ip, int _port)
         {
             Ip = IPAddress.Parse(_ip);
@@ -64,8 +63,8 @@ namespace Server
             }
         }
 
-		public List<string> loggedIn = new List<string>();    //Gör som den checkar databasen istället
-		private void HandleRequest(TcpClient client)
+        //public List<string> loggedIn = new List<string>();    //Gör som den checkar databasen istället
+        private void HandleRequest(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
             try
@@ -80,13 +79,7 @@ namespace Server
                     string request = Encoding.UTF8.GetString(buffer, 0, recv);
 
                     // Change string type from string to json
-                    Message data = JsonSerializer.Deserialize<Message>(request);
-
-                    if (data != null) // User gets added when sending first request
-                    {
-                        if (!connectedClients.ContainsKey(data.Sender))
-                            connectedClients.Add(data.Sender, client);
-                    }
+                    Request data = JsonSerializer.Deserialize<Request>(request);
 
                     switch (data.Type)
                     {
@@ -96,40 +89,50 @@ namespace Server
                             users = db.Users.ToList();
 
                             string temp = "";
-                            foreach (User user in users)
+                            foreach (User user1 in users)
                             {
-                                temp += user.Username + ";";
-                                temp += user.Password + "/n";
+                                temp += user1.Username + ";";
+                                temp += user1.Password + "/n";
                             }
 
-                            Message message = new Message { MessageContents = temp };
+                            Request message = new Request { Type = "message", Contents = new Message() { Contents = "success" } };
+
                             SendToClient(client, message);
                             break;
                         case "login":
-							bool uniqueCheck = true;
-							foreach (string online in loggedIn)
-							{
-								if (online.Contains(data.Sender))    //Ändra som den checkar databas
-								{
-									uniqueCheck = false;
-									break;
-								}
-							}
-							if (uniqueCheck)
-							{
-								SendMessage(new Message() { Type = data.Type, Sender = data.Sender });
-								loggedIn.Add(data.Sender);
-							}
-							else
-							{
-								SendMessage(new Message() { Type = "error", Sender = data.Sender });
-							}
-							break;
+                            User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
+
+                            bool uniqueCheck = true;
+                            if (connectedClients.ContainsKey(user.Username))
+                            {
+                                uniqueCheck = false;
+                                break;
+                            }
+
+                            if (uniqueCheck)
+                            {
+                                SendMessage(new Request() { Type = data.Type, Contents = user });
+                                connectedClients.Add(user.Username, client);
+                                Console.WriteLine("Added user" + user.Username);
+                            }
+                            else
+                            {
+                                SendMessage(new Request() { Type = "error" });
+                            }
+                            break;
                         case "register":
                             RegisterUser(data, client);
                             break;
                         case "message":
-                            SendMessage(new Message() { Type = data.Type, MessageContents = data.MessageContents, Sender = data.Sender });
+                            Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
+
+                            Console.WriteLine(data.Contents.GetType().FullName);
+
+                            if (x is Message m)
+                            {
+                                SendMessage(new Request() { Type = "message", Contents = new Message() { Contents = m.Contents, Sender = m.Sender, Recipient = m.Recipient } });
+                                Console.Write(m.Contents);
+                            }
                             break;
                         default:
                             break;
@@ -144,7 +147,7 @@ namespace Server
             }
         }
 
-        private void SendMessage(Message message)
+        private void SendMessage(Request message)
         {
             foreach (var tcp in connectedClients)
             {
@@ -157,21 +160,23 @@ namespace Server
 
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Flush();
-               
+
             }
         }
 
-        private void RegisterUser(Message data, TcpClient client)
+        private void RegisterUser(Request data, TcpClient client)
         {
             try
             {
+                User l = (User)data.Contents;
+
                 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
-                db.Add(new Database.Models.User { Username = data.Username, Password = data.Password });
+                db.Add(new Database.Models.User { Username = l.Username, Password = l.Password });
                 db.SaveChanges();
 
-                Message message = new Message();
+                Request message = new Request();
                 message.Type = "register";
-                message.MessageContents = "Success";
+                message.Contents = l;
                 SendToClient(client, message);
             }
             catch (Exception e)
@@ -180,8 +185,7 @@ namespace Server
             }
         }
 
-
-        private void SendToClient(TcpClient tcpClient, Message message)
+        private void SendToClient(TcpClient tcpClient, Request message)
         {
             NetworkStream stream = tcpClient.GetStream();
 
