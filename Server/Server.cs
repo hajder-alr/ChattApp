@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -168,15 +168,18 @@ namespace Server
         {
             try
             {
-                User l = (User)data.Contents;
+                User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
                 // https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=visual-studio
-                db.Add(new Database.Models.User { Username = l.Username, Password = l.Password });
+                //Need to add logic to check if username is already taken or not in the database
+                db.Add(new Database.Models.User { Username = user.Username, Password = user.Password });
                 db.SaveChanges();
 
                 Request message = new Request();
+
                 message.Type = "register";
-                message.Contents = l;
+                message.Contents = "successful";
+
                 SendToClient(client, message);
             }
             catch (Exception e)

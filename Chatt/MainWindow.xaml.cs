@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using System.Threading;
 using System.Windows.Interop;
 using System.Diagnostics;
+using System.Data;
 
 namespace Chatt
 {
@@ -26,6 +27,8 @@ namespace Chatt
     {
         TcpClient client;
         NetworkStream stream;
+        Message message;
+        public string PasswordInput { get; set; }
         //Request request;
         public MainWindow()
         {
@@ -67,7 +70,7 @@ namespace Chatt
 
                 request.Type = "message";
 
-                request.Contents = new Message() { Contents = msg.Text, Sender = sender.Text, Recipient = null };
+                request.Contents = new Message() { Contents = msg.Text, Sender = username.Text, Recipient = null };
 
                 sendDataPacket(request);
             }
@@ -100,11 +103,19 @@ namespace Chatt
                     switch (data.Type)
                     {
                         case "login":
-                            User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
-                            UpdateTextBox($"[{user.Username}]", ConnectedUserBox);
-                            break;
+                            {
+                                User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
+                                UpdateTextBox($"[{user.Username}]", ConnectedUserBox);
+                                break;
+                            }
                         case "register":
-                            break;
+                            {
+                                if (data.Contents.ToString() == "successful") // Servern får skicka tillbaka samma användarnamn & lösenord om kontot är skapat. Annars skickas inget
+                                    UpdateTextBox("Account has been created", msgbox);
+
+                                else UpdateTextBox("User name already taken", msgbox);
+                                break;
+                            }
                         case "message":
                             Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
                             UpdateTextBox($"[{x.Sender}]: {x.Contents}", msgbox);
@@ -125,20 +136,21 @@ namespace Chatt
             catch (ThreadAbortException) { Console.WriteLine("Receiving thread aborted."); }
             finally { stream.Close(); client.Close(); }
         }
-        private void Startup()
+
+        private void Startup(string command)
         {
+            message = new Message();
         connection:
             try
-            {  //Om man ändrar sitt usernamn efter man har valt ett så anslutar 2 (1+1) stycken av den nya och ökar varje gång
+            {
                 client = new TcpClient("127.0.0.1", 1302);
                 stream = client.GetStream();
                 Request request = new Request();
 
-                request.Type = "login";
-                request.Contents = new User() { Password = password.Text, Username = sender.Text };
+                request.Type = command;
+                request.Contents = new User() { Password = PasswordInput, Username = username.Text };
 
                 sendDataPacket(request);
-
                 Thread receivingThread = new Thread(() => ReceivingTask(stream, client));
                 receivingThread.Start();
             }
@@ -151,7 +163,31 @@ namespace Chatt
 
         private void Login(object sender, RoutedEventArgs e)
         {
-            Startup();
+            Startup("login");
+        }
+
+        private void Register(object sender, RoutedEventArgs e)
+        {
+            if (username.Text.Length < 4 || username.Text.Length > 16 || username.Text == "Username")
+            {
+                msgbox.Text = "Username needs to be between 4 and 16 characters";
+            }
+            else if (username.Text.Any(char.IsWhiteSpace))
+            {
+                msgbox.Text = "Username cannot contain white space";
+            }
+            else if (PasswordInput.Length < 4 || PasswordInput.Length > 16 || PasswordInput == "password")
+            {
+                msgbox.Text = "Password needs to be between 4 and 16 characters";
+            }
+            else if (PasswordInput.Any(char.IsWhiteSpace))
+            {
+                msgbox.Text = "Password cannot contain white space";
+            }
+            else
+            {
+                Startup("register");
+            }
         }
 
         private void sendDataPacket(Request message)
@@ -160,6 +196,50 @@ namespace Chatt
             int byteCount = Encoding.ASCII.GetByteCount(jsonString + 1);
             byte[] sendData = Encoding.ASCII.GetBytes(jsonString);
             stream.Write(sendData, 0, sendData.Length);
+        }
+
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            PasswordInput = passwordBox.Password;
+        }
+        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (passwordBox.Password == "password")
+            {
+                passwordBox.Password = "";
+            }
+        }
+        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(passwordBox.Password))
+            {
+                passwordBox.Password = "password";
+            }
+        }
+        private void PasswordBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Check the initial focus state when the program starts
+            PasswordBox_LostFocus(sender, e);
+
+        }
+        private void TextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (username.Text == "Username")
+            {
+                username.Text = "";
+            }
+        }
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(username.Text))
+            {
+                username.Text = "Username";
+            }
+        }
+        private void TextBox_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Check the initial focus state when the program starts
+            TextBox_LostFocus(sender, e);
         }
     }
 }
