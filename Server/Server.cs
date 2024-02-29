@@ -75,96 +75,137 @@ namespace Server
             NetworkStream stream = client.GetStream();
             try
             {
+                StringBuilder sb = new StringBuilder();
+                byte[] buffer = new byte[1024]; // 1 KB buffer size
+                int bytesRead;
 
-                while (true)
+                /*
+                    Hade problem med att klienten skickade sammankopplade json's om man använder sendDataPacket flera gånger,
+                    så vi skickar med ett "\n" från klienten efter varje request, så att vi kan seperera stringen och behandla json' datan enskilt
+                */
+
+                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    byte[] buffer = new byte[1024]; //1 KB
-                    int recv = stream.Read(buffer, 0, buffer.Length);
-                    if (recv == 0) break;
+                    sb.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
 
-                    string request = Encoding.UTF8.GetString(buffer, 0, recv);
-
-                    // Change string type from string to json
-                    Request data = JsonSerializer.Deserialize<Request>(request);
-
-                    switch (data.Type)
+                    // Check if the received data contains the delimiter
+                    string receivedData = sb.ToString();
+                    int delimiterIndex;
+                    while ((delimiterIndex = receivedData.IndexOf("\n")) != -1)
                     {
-                        case "getallusers":
-                            List<User> users;
+                        string jsonMessage = receivedData.Substring(0, delimiterIndex);
 
-                            users = db.Users.ToList();
+                        Request data = JsonSerializer.Deserialize<Request>(jsonMessage);
 
-                            string temp = "";
-                            foreach (User user1 in users)
-                            {
-                                temp += user1.Username + ";";
-                                temp += user1.Password + "/n";
-                            }
+                        switch (data.Type)
+                        {
+                            case "getallusers":
+                                List<User> users;
 
-                            Request message = new Request { Type = "message", Contents = new Message() { Contents = "success" } };
+                                users = db.Users.ToList();
 
-                            SendToClient(client, message);
-							          break;
-                            case "login":
-                            User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
-
-                            string inputname = user.Username;
-                            string inputPassword = user.Password;
-
-                            var check = db.Users.FirstOrDefault(u => u.Username == inputname && u.Password == inputPassword);
-
-                            if (check != null)
-                            {
-                                //Checkar om det finns något i databasen med namnet och om det finns gå vidare
-                                //OM DET FINNS
-                                bool uniqueCheck = true;
-                                if (connectedClients.ContainsKey(user.Username))
+                                string temp = "";
+                                foreach (User user1 in users)
                                 {
-                                    uniqueCheck = false;
-                                    break;
+                                    temp += user1.Username + ";";
+                                    temp += user1.Password + "/n";
                                 }
 
-                                if (uniqueCheck)
+                                Request message = new Request { Type = "message", Contents = new Message() { Contents = "success" } };
+
+                                SendToClient(client, message);
+                                break;
+                            case "login":
+                                User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
+
+                                string inputname = user.Username;
+                                string inputPassword = user.Password;
+
+                                Console.WriteLine("Login claled");
+
+                                var check = db.Users.FirstOrDefault(u => u.Username == inputname && u.Password == inputPassword);
+
+                                if (check != null)
                                 {
-                                    SendMessage(new Request() { Type = data.Type, Contents = user.Username }); //(fel här?)
-                                    //loggedIn.Add(data.Sender);
-                                    connectedClients.Add(user.Username, client);
+                                    //Checkar om det finns något i databasen med namnet och om det finns gå vidare
+                                    //OM DET FINNS
+                                    bool uniqueCheck = true;
+                                    if (connectedClients.ContainsKey(user.Username))
+                                    {
+                                        uniqueCheck = false;
+                                        break;
+                                    }
+
+                                    if (uniqueCheck)
+                                    {
+                                        SendMessage(new Request() { Type = data.Type, Contents = user }); //(fel här?)
+                                                                                                          //loggedIn.Add(data.Sender);
+                                        connectedClients.Add(user.Username, client);
+                                    }
+                                    else
+                                    {
+                                        SendMessage(new Request() { Type = "error", Contents = user.Username });
+                                        Console.WriteLine("Error: Not unique");
+                                        //client.Close();
+                                        break;
+                                    }
                                 }
                                 else
                                 {
-                                    SendMessage(new Request() { Type = "error", Contents = user.Username });
+                                    //OM INTE FINNS
+                                    SendToClient(new Request() { Type = "error1" }, client);
+                                    //client.Close();
+                                    break;
                                 }
-                            }
-                            else
-                            {
-                                //OM INTE FINNS
-                                SendMessage(new Request() { Type = "error1", Contents = user.Username });
-                            }
-                            break;
-                        case "register":
-                            RegisterUser(data, client);
-                            break;
-                        case "message":
-                            Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
+                                break;
+                            case "register":
+                                Console.WriteLine("Register claled");
 
-                            Console.WriteLine(data.Contents.GetType().FullName);
+                                RegisterUser(data, client);
+                                break;
+                            case "message":
+                                Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
 
-                            if (x is Message m)
-                            {
-                                SendMessage(new Request() { Type = "message", Contents = new Message() { Contents = m.Contents, Sender = m.Sender, Recipient = m.Recipient } });
-                                Console.Write(m.Contents);
-                            }
-                            break;
-                        default:
-                            break;
+                                if (x is Message m)
+                                {
+                                    SendMessage(new Request() { Type = "message", Contents = new Message() { Contents = x.Contents, Sender = x.Sender, Recipient = x.Recipient } });
+
+                                    m.Status = "none";
+                                    db.Messages.Add(m);
+                                    db.SaveChanges();
+                                }
+                                break;
+                            case "history":
+                                List<Message> messageList = db.Messages.ToList();
+
+                                Request historyRequest = new Request() { Type = "history", Contents = messageList };
+
+                                SendToClient(historyRequest, client);
+                                break;
+                            case "onlinelist":
+                                List<string> onlineUsers = connectedClients.Keys.ToList();
+
+                                SendToClient(new Request() { Type = "onlinelist", Contents = onlineUsers }, client);
+                                break;
+                            default:
+                                break;
+                        }
+
+                        receivedData = receivedData.Substring(delimiterIndex + 1);
                     }
-                    Console.WriteLine("request received: " + request);
+
+                    sb.Clear();
+                    sb.Append(receivedData);
                 }
             }
-            catch (Exception e)
+            catch (IOException ex)
             {
-                Console.WriteLine("Something went wrong.");
-                Console.WriteLine(e.ToString());
+                Console.WriteLine("IOException: " + ex.Message);
+            }
+            finally
+            {
+                stream.Close();
+                client.Close();
             }
         }
 
@@ -181,8 +222,19 @@ namespace Server
 
                 stream.Write(buffer, 0, buffer.Length);
                 stream.Flush();
-
             }
+        }
+
+        private void SendToClient(Request message, TcpClient client)
+        {
+            NetworkStream stream = client.GetStream();
+
+            string jsonString = JsonSerializer.Serialize(message);
+
+            byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
+
+            stream.Write(buffer, 0, buffer.Length);
+            stream.Flush();
         }
 
         private void RegisterUser(Request data, TcpClient client)
