@@ -11,9 +11,15 @@ using Server.Database;
 using System.Reflection.Metadata;
 using Server.Database.Models;
 using static System.Net.Mime.MediaTypeNames;
+using Microsoft.Data.Sqlite;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Server
 {
+    //"Relogga" skapar 2 stycken av den nya
+    //Ändra logga in knapp när inloggan(stäng av den, ändra den)
+    //Fixa Online user så den uppdaterar när listan blir uppdaterad
+
     class Server
     {
         private static Server? instance = null;
@@ -98,26 +104,41 @@ namespace Server
                             Request message = new Request { Type = "message", Contents = new Message() { Contents = "success" } };
 
                             SendToClient(client, message);
-                            break;
-                        case "login":
+							          break;
+                            case "login":
                             User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
-                            bool uniqueCheck = true;
-                            if (connectedClients.ContainsKey(user.Username))
-                            {
-                                uniqueCheck = false;
-                                break;
-                            }
+                            string inputname = user.Username;
+                            string inputPassword = user.Password;
 
-                            if (uniqueCheck)
+                            var check = db.Users.FirstOrDefault(u => u.Username == inputname && u.Password == inputPassword);
+
+                            if (check != null)
                             {
-                                SendMessage(new Request() { Type = data.Type, Contents = user });
-                                connectedClients.Add(user.Username, client);
-                                Console.WriteLine("Added user" + user.Username);
+                                //Checkar om det finns något i databasen med namnet och om det finns gå vidare
+                                //OM DET FINNS
+                                bool uniqueCheck = true;
+                                if (connectedClients.ContainsKey(user.Username))
+                                {
+                                    uniqueCheck = false;
+                                    break;
+                                }
+
+                                if (uniqueCheck)
+                                {
+                                    SendMessage(new Request() { Type = data.Type, Contents = user.Username }); //(fel här?)
+                                    //loggedIn.Add(data.Sender);
+                                    connectedClients.Add(user.Username, client);
+                                }
+                                else
+                                {
+                                    SendMessage(new Request() { Type = "error", Contents = user.Username });
+                                }
                             }
                             else
                             {
-                                SendMessage(new Request() { Type = "error" });
+                                //OM INTE FINNS
+                                SendMessage(new Request() { Type = "error1", Contents = user.Username });
                             }
                             break;
                         case "register":
