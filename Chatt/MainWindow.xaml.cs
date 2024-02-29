@@ -102,7 +102,7 @@ namespace Chatt
                 bool quit = false;
                 while (!quit)
                 {
-                    byte[] receiveData = new byte[1024];
+                    byte[] receiveData = new byte[4096];
                     int bytesReceived = stream.Read(receiveData, 0, receiveData.Length);
                     string response = Encoding.UTF8.GetString(receiveData, 0, bytesReceived);
 
