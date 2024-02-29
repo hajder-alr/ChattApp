@@ -180,7 +180,7 @@ namespace Server
 
                                 Request historyRequest = new Request() { Type = "history", Contents = messageList };
 
-                                SendToClient(historyRequest, client);
+                                //SendToClient(historyRequest, client);
                                 break;
                             case "onlinelist":
                                 List<string> onlineUsers = connectedClients.Keys.ToList();

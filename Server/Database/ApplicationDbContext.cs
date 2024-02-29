@@ -16,7 +16,7 @@ namespace Server.Database
         public string DbPath { get; }
         public ApplicationDbContext()
         {
-            DbPath = "C:\\Users\\hajde\\source\\repos\\Chatt\\Server\\chat.db";
+            DbPath = "C:\\Users\\Dennis Wiklund\\source\\repos\\ChattApp\\Server\\chat.db";
         }
 
         // The following configures EF to create a SqlServer database file in the
