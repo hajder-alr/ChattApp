@@ -116,7 +116,7 @@ namespace Server
                                     if (connectedClients.ContainsKey(user.Username))
                                     {
                                         uniqueCheck = false;
-                                        break;
+                                        //break;
                                     }
 
                                     if (uniqueCheck)
@@ -129,7 +129,7 @@ namespace Server
                                     else
                                     {
                                         SendMessage(new Request() { Type = "error", Contents = user.Username });
-                                        Console.WriteLine("Error: Not unique");
+                                        Console.WriteLine("Error: Not unique"); // Redan inloggad
                                         //client.Close();
                                         break;
                                     }
@@ -138,6 +138,7 @@ namespace Server
                                 {
                                     //OM INTE FINNS
                                     SendToClient(new Request() { Type = "error1" }, client);
+                                    SendToClient(new Request() { Type = "close" }, client);
                                     //client.Close();
                                     break;
                                 }
@@ -210,6 +211,7 @@ namespace Server
                 NetworkStream stream = client.GetStream();
 
                 string jsonString = JsonSerializer.Serialize(message);
+
                 ConsoleColorServer("[Server] -> ", tcp.Key, jsonString);
 
                 byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
@@ -253,10 +255,12 @@ namespace Server
                 message.Contents = "successful";
 
                 SendToClient(message, client);
+                SendToClient(new Request() { Type = "close" }, client);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
+                SendToClient(new Request() { Type = "close" }, client);
             }
         }
 

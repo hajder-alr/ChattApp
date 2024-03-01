@@ -93,12 +93,118 @@ namespace Chatt
             textblock.Text += text + "\n";
         }
 
+        private void ClearTextBox(TextBlock textblock)
+        {
+            if (!textblock.Dispatcher.CheckAccess())
+            {
+                textblock.Dispatcher.Invoke(() => ClearTextBox(textblock));
+                return;
+            }
+            textblock.Text += "";
+        }
+
+        private void ReceivingTask00(NetworkStream stream, TcpClient client)
+        {
+            try
+            {
+                sendDataPacket(new Request() { Type = "history", Contents = "null" });
+                sendDataPacket(new Request() { Type = "onlinelist", Contents = "null" });
+                bool quit = false;
+                string responseBuffer = ""; // Buffer to accumulate received data
+                while (!quit)
+                {
+                    byte[] receiveData = new byte[4096]; // Set byte size to 1024
+                    int bytesRead = stream.Read(receiveData, 0, receiveData.Length);
+                    responseBuffer += Encoding.UTF8.GetString(receiveData, 0, bytesRead);
+
+                    string[] responses = responseBuffer.Split('\n'); // Split by delimiter
+
+                    foreach (string response in responses)
+                    {
+                        if (response.Length > 0) // Ensure response is not empty
+                        {
+                            Request data = JsonSerializer.Deserialize<Request>(response)!;
+
+                            switch (data.Type)
+                            {
+                                case "login":
+                                    {
+                                        User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
+                                        UpdateTextBox($"[{user.Username}]", ConnectedUserBox);
+                                        break;
+                                    }
+                                case "register":
+                                    {
+                                        if (data.Contents.ToString() == "successful") // Servern får skicka tillbaka samma användarnamn & lösenord om kontot är skapat. Annars skickas inget
+                                        {
+                                            UpdateTextBox("Account has been created", msgbox);
+                                            // sendDataPacket(new Request() { Type = "login", Contents = new User() { Username = username.Text, Password = PasswordInput } });
+                                        }
+
+                                        else UpdateTextBox("\nUser name already taken", msgbox);
+                                        break;
+                                    }
+                                case "message":
+                                    //UpdateTextBox(data.Contents.GetType().ToString(), msgbox);
+                                    Message xf = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
+
+                                    UpdateTextBox($"[{xf.Sender}]: {xf.Contents}", msgbox);
+                                    break;
+                                case "error":
+                                    /*
+                                                  MessageBox.Show(ex.Message, "Message", MessageBoxButton.OK, MessageBoxImage.Error);
+                                                  UpdateTextBox($"[{data.Sender}]: fel", msgbox);
+                                                  MessageBox.Show("Login Error",$"[{data.Sender}]: fel", MessageBoxButton.OK, MessageBoxImage.Error);
+                                    */
+                                    MessageBox.Show("Redan inloggad", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                    //  ^Skickar detta till alla clienter, men ska bara till den som gör fel - Fixat
+                                    break;
+                                case "error1":
+                                    MessageBox.Show("Användare finns ej eller fel lössenord", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                    break;
+                                case "history":
+                                    List<Message> history = JsonSerializer.Deserialize<List<Message>>((JsonElement)data.Contents);
+
+                                    foreach (Message m in history)
+                                    {
+                                        UpdateTextBox($"[{m.Sender}]: {m.Contents}", msgbox);
+                                    }
+                                    break;
+                                case "onlinelist":
+                                    List<string> users = JsonSerializer.Deserialize<List<string>>((JsonElement)data.Contents);
+                                    foreach (string user in users)
+                                    {
+                                        UpdateTextBox($"[{user}]", ConnectedUserBox);
+                                    }
+                                    break;
+                                default:
+                                    break;
+                                    // Remaining cases follow the same pattern...
+                                    // Please insert your existing cases here
+                            }
+                        }
+                    }
+
+                    // After processing, remove processed data from buffer
+                    int lastDelimiterIndex = responseBuffer.LastIndexOf('\n');
+                    if (lastDelimiterIndex != -1)
+                    {
+                        responseBuffer = responseBuffer.Substring(lastDelimiterIndex + 1);
+                    }
+                }
+            }
+            catch (ThreadAbortException) { Console.WriteLine("Receiving thread aborted."); }
+            finally { stream.Close(); client.Close(); }
+        }
+
+
         private void ReceivingTask(NetworkStream stream, TcpClient client)
         {
             try
             {
                 sendDataPacket(new Request() { Type = "history", Contents = "null" });
                 sendDataPacket(new Request() { Type = "onlinelist", Contents = "null" });
+
                 bool quit = false;
                 while (!quit)
                 {
@@ -160,6 +266,11 @@ namespace Chatt
                                 UpdateTextBox($"[{user}]", ConnectedUserBox);
                             }
                             break;
+                        case "close":
+                            quit = true;
+                            ClearTextBox(ConnectedUserBox);
+                            ClearTextBox(msgbox);
+                            break;
                         default:
                             break;
                     }
@@ -182,10 +293,10 @@ namespace Chatt
                 request.Type = command;
                 request.Contents = new User() { Password = PasswordInput, Username = username.Text };
 
-                if (command == "register")
-                    sendDataPacket(request);
+                //if (command == "register") 
+                //    sendDataPacket(request);
 
-                sendDataPacket(new Request() { Type = "login", Contents = new User() { Password = PasswordInput, Username = username.Text } });
+                sendDataPacket(new Request() { Type = command, Contents = new User() { Password = PasswordInput, Username = username.Text } });
 
                 Thread receivingThread = new Thread(() => ReceivingTask(stream, client));
                 receivingThread.Start();
