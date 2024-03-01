@@ -73,6 +73,7 @@ namespace Server
         private void HandleRequest(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
+            string clientName = "NOT LOGGED IN";
             try
             {
                 StringBuilder sb = new StringBuilder();
@@ -99,29 +100,11 @@ namespace Server
 
                         switch (data.Type)
                         {
-                            case "getallusers":
-                                List<User> users;
-
-                                users = db.Users.ToList();
-
-                                string temp = "";
-                                foreach (User user1 in users)
-                                {
-                                    temp += user1.Username + ";";
-                                    temp += user1.Password + "/n";
-                                }
-
-                                Request message = new Request { Type = "message", Contents = new Message() { Contents = "success" } };
-
-                                SendToClient(client, message);
-                                break;
                             case "login":
                                 User user = JsonSerializer.Deserialize<User>((JsonElement)data.Contents);
 
                                 string inputname = user.Username;
                                 string inputPassword = user.Password;
-
-                                Console.WriteLine("Login claled");
 
                                 var check = db.Users.FirstOrDefault(u => u.Username == inputname && u.Password == inputPassword);
 
@@ -138,9 +121,10 @@ namespace Server
 
                                     if (uniqueCheck)
                                     {
-                                        SendMessage(new Request() { Type = data.Type, Contents = user }); //(fel här?)
-                                                                                                          //loggedIn.Add(data.Sender);
+                                        SendMessage(new Request() { Type = data.Type, Contents = new User() { Username = user.Username } }); //(fel här?)
+                                                                                                                                             //loggedIn.Add(data.Sender);
                                         connectedClients.Add(user.Username, client);
+                                        clientName = user.Username;
                                     }
                                     else
                                     {
@@ -159,11 +143,12 @@ namespace Server
                                 }
                                 break;
                             case "register":
-                                Console.WriteLine("Register claled");
-
                                 RegisterUser(data, client);
                                 break;
                             case "message":
+                                if (!connectedClients.ContainsValue(client))
+                                    break;
+
                                 Message x = JsonSerializer.Deserialize<Message>((JsonElement)data.Contents);
 
                                 if (x is Message m)
@@ -176,6 +161,9 @@ namespace Server
                                 }
                                 break;
                             case "history":
+                                if (!connectedClients.ContainsValue(client))
+                                    break;
+
                                 List<Message> messageList = db.Messages.ToList();
 
                                 Request historyRequest = new Request() { Type = "history", Contents = messageList };
@@ -183,6 +171,9 @@ namespace Server
                                 SendToClient(historyRequest, client);
                                 break;
                             case "onlinelist":
+                                if (!connectedClients.ContainsValue(client))
+                                    break;
+
                                 List<string> onlineUsers = connectedClients.Keys.ToList();
 
                                 SendToClient(new Request() { Type = "onlinelist", Contents = onlineUsers }, client);
@@ -191,6 +182,8 @@ namespace Server
                                 break;
                         }
 
+                        //Console.WriteLine($"[{clientName}] -> [Server] :: {jsonMessage}");
+                        ConsoleColorClient(clientName, "[Server]", jsonMessage);
                         receivedData = receivedData.Substring(delimiterIndex + 1);
                     }
 
@@ -217,6 +210,7 @@ namespace Server
                 NetworkStream stream = client.GetStream();
 
                 string jsonString = JsonSerializer.Serialize(message);
+                ConsoleColorServer("[Server] -> ", tcp.Key, jsonString);
 
                 byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
 
@@ -230,6 +224,11 @@ namespace Server
             NetworkStream stream = client.GetStream();
 
             string jsonString = JsonSerializer.Serialize(message);
+
+            string foundKey = connectedClients.FirstOrDefault(x => x.Value == client).Key;
+
+            //Console.WriteLine($"[Server] -> {foundKey} :: {jsonString}");
+            ConsoleColorServer("[Server]", foundKey, jsonString);
 
             byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
 
@@ -253,7 +252,7 @@ namespace Server
                 message.Type = "register";
                 message.Contents = "successful";
 
-                SendToClient(client, message);
+                SendToClient(message, client);
             }
             catch (Exception e)
             {
@@ -261,16 +260,59 @@ namespace Server
             }
         }
 
-        private void SendToClient(TcpClient tcpClient, Request message)
+        //private void SendToClient(TcpClient tcpClient, Request message)
+        //{
+        //    NetworkStream stream = tcpClient.GetStream();
+        //
+        //    string jsonString = JsonSerializer.Serialize(message);
+        //
+        //    byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
+        //
+        //    stream.Write(buffer, 0, buffer.Length);
+        //    stream.Flush();
+        //}
+        private void ConsoleColorServer(string serverText, string keyText, string jsonString)
         {
-            NetworkStream stream = tcpClient.GetStream();
+            // Set colors for each part of the string
+            Console.ForegroundColor = ConsoleColor.DarkRed; // Server text in red
+            Console.Write(serverText);
 
-            string jsonString = JsonSerializer.Serialize(message);
+            Console.ForegroundColor = ConsoleColor.DarkYellow; // Orange color is not available in ConsoleColor, using DarkYellow as an alternative
+            Console.Write(" -> ");
 
-            byte[] buffer = Encoding.UTF8.GetBytes(jsonString);
+            Console.ForegroundColor = ConsoleColor.DarkRed; // Orange color is not available in ConsoleColor, using DarkYellow as an alternative
+            Console.Write(keyText);
 
-            stream.Write(buffer, 0, buffer.Length);
-            stream.Flush();
+            Console.ForegroundColor = ConsoleColor.DarkGray; // Separator in red
+            Console.Write(" :: ");
+
+            Console.ForegroundColor = ConsoleColor.DarkRed; // JSON string in white
+            Console.WriteLine(jsonString);
+
+            // Reset colors to default
+            Console.ResetColor();
+        }
+
+        private void ConsoleColorClient(string serverText, string keyText, string jsonString)
+        {
+            // Set colors for each part of the string
+            Console.ForegroundColor = ConsoleColor.DarkYellow; // Server text in red
+            Console.Write(serverText);
+
+            Console.ForegroundColor = ConsoleColor.DarkRed; // Orange color is not available in ConsoleColor, using DarkYellow as an alternative
+            Console.Write(" -> ");
+
+            Console.ForegroundColor = ConsoleColor.DarkYellow; // Orange color is not available in ConsoleColor, using DarkYellow as an alternative
+            Console.Write(keyText);
+
+            Console.ForegroundColor = ConsoleColor.DarkGray; // Separator in red
+            Console.Write(" :: ");
+
+            Console.ForegroundColor = ConsoleColor.DarkYellow; // JSON string in white
+            Console.WriteLine(jsonString);
+
+            // Reset colors to default
+            Console.ResetColor();
         }
     }
 }
